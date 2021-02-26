@@ -419,7 +419,8 @@ void main() {
       if(enemy_y >= 210 || ((enemy_x >= actor_x[0]-4 && enemy_x <= actor_x[0]+8)&& (enemy_y >= actor_y[0]-2 && enemy_y <= actor_y[0]+4))){
        lives--;
        sfx_play(2,0);
-       enemy_x = 0; 
+       enemy_x = 0;
+       delay(20);
       }
     
 
@@ -428,7 +429,8 @@ void main() {
       if(enemyBird_y >= 210 || ((enemyBird_x >= actor_x[0]-4 && enemyBird_x <= actor_x[0]+8)&& (enemyBird_y >= actor_y[0]-2 && enemyBird_y <= actor_y[0]+4))){
        lives--;
        sfx_play(2,0);
-       enemyBird_x = 250; 
+       enemyBird_x = 250;
+        delay(20);
       }
     
 /***************************************************** COPY HERE (G) *****************/    
