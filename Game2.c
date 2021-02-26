@@ -4,16 +4,27 @@
 #include "neslib.h"
 #include <nes.h>
 
+//#link "famitone2.s"
+void fastcall famitone_update(void);
+//#link "music_dangerstreets.s"
+extern char danger_streets_music_data[];
+
+
 //#link "chr_generic.s"
 //#link "fruit_background.s"
 
-//#link "famitone2.s"
 void __fastcall__ famitone_update(void);
 //#link "effects.s"
 extern char effects[];
 extern const byte fruit_background_pal[16];
 extern const byte fruit_background_rle[];
 
+char a[1], b[2];
+char i;
+char pad;
+int f; //for frames
+int temp1, temp2, tempResult; //For temporary holding random ints and result after ops
+int operator = 0; //If 0 ADD, if 1 MULTIPLY
 
 /*******************META SPRITES FOR PLAYER AND ENEMY************************************************************/
 
@@ -220,6 +231,12 @@ byte iabs(int x);
 void add_grass_tiles(void);
 void show_title_screen(const byte*, const byte* );
 void fruit_collision(int,);
+
+void title(void); 		//shows title screen
+void fade_in(void);
+
+void gameOver(void);
+void victory(void);
 /************************************************************************************************************/
 
 
@@ -236,6 +253,12 @@ void main() {
   char pad2;
   score =0;
   lives = 3;
+  
+  
+  title();
+  
+  
+  
   
   // Initialize actor fruits
   for(i=0;i<4;i++){		
@@ -255,20 +278,6 @@ void main() {
   sfx_init(effects);
   nmi_set_callback(famitone_update);
   
-  //press start to begin, randomize fruit positision while waiting
- // while(1){
- //  pad = pad_trigger(0);
- //  for(i=0;i<4;i++){	
- //   Fruits[i]._x = rndint(20,230);
- //  Fruits[i]._y = rndint(15,70);
- // }
- //  if(pad & PAD_START)
- //  {
- //     break;
- //   }
- // };
-  
-
   //Place the player in the middle of the screen
     actor_x[0] = 120;
     actor_y[0] = 191;
@@ -293,6 +302,13 @@ void main() {
 
   
   // Initiate Game loop
+  
+  famitone_init(danger_streets_music_data);
+  // set music callback function for NMI
+  nmi_set_callback(famitone_update);
+  // play music
+  music_play(0);
+  
   while (1) {
     // start with OAMid/sprite 0
     oam_id = 0;
@@ -424,8 +440,17 @@ void main() {
     ppu_wait_frame();
 
     
+    	//Win Conditions
+      if (score >= 50){
+      sfx_play(0,0);
+       victory();
+      break;
+      }
+    
+      //Lose Conditions
       if (lives == 0){
       sfx_play(0,0);
+      gameOver();
       break;
     }
   }
@@ -447,7 +472,7 @@ byte rndint(byte a, byte b){
   return (rand() % (b-a)) + a;
 }
 /*******************************************/
-void show_title_screen(const byte* pal, const byte* rle) {
+/*void show_title_screen(const byte* pal, const byte* rle) {
   // disable rendering
   ppu_off();
   // set palette, virtual bright to 0 (total black)
@@ -457,7 +482,7 @@ void show_title_screen(const byte* pal, const byte* rle) {
   vram_unrle(rle);
   // enable rendering
 
-}
+}*/
 
 
 void fruit_collision(int f){
@@ -500,4 +525,128 @@ void fruit_collision(int f){
   }
   
 
+}
+
+/*Title*/
+void title(){ 
+  
+   show_title_screen(fruit_background_pal,fruit_background_rle);
+   while(1){
+   pad = pad_trigger(i);
+   if(pad & PAD_START)
+   {
+      ppu_off();
+      for(f=0; f < 10; f++) ppu_wait_frame();
+      break;
+    }
+  temp1 = rndint(1,9);
+  temp2 = rndint(1,9);
+  operator = rndint(1,90);
+  };
+  
+}
+
+void fade_in() {
+  byte vb;
+  for (vb=0; vb<=4; vb++) {
+    // set virtual bright value
+    pal_bright(vb);
+    // wait for 4/60 sec
+    ppu_wait_frame();
+    ppu_wait_frame();
+    ppu_wait_frame();
+    ppu_wait_frame();
+  }
+}
+
+void show_title_screen(const byte* pal, const byte* rle) {
+  // disable rendering
+  ppu_off();
+  // set palette, virtual bright to 0 (total black)
+  pal_bg(pal);
+  pal_bright(0);
+  // unpack nametable into the VRAM
+  vram_adr(0x2000);
+  vram_unrle(rle);
+  // enable rendering
+  ppu_on_all();
+  // fade in from black
+  fade_in();
+}
+
+/***********Game Over Screen ***********************************/
+void gameOver()
+{
+  bool game_over = true;
+  char pad; 
+ 
+  music_stop();
+  setup_graphics();
+  ppu_off();
+  
+  
+  pal_col(0,0xF3);
+  
+  vram_adr(NTADR_A(10,6));
+  vram_write("You got wrecked", 15);
+  
+  vram_adr(NTADR_A(6,10));
+  vram_write("Press Start to Restart", 22);
+  ppu_on_all();
+
+ 
+  while(game_over) 
+  { 
+    pad = pad_trigger(0);
+    if (pad & PAD_START) 
+    {
+      ppu_off();     
+      game_over = false; 
+      ppu_on_all();
+      
+    }
+  }
+  // reset lives and score
+  main();
+
+  
+}
+ 
+/***********Victory Screen ***********************************/
+void victory()
+{
+  bool youWin = true;
+  char pad; 
+ 
+  music_stop();
+  setup_graphics();
+  ppu_off();
+  vram_adr(NTADR_A(6,6));
+  vram_write("Congratulations Cowboy", 22);
+  
+  vram_adr(NTADR_A(2,8));
+  vram_write("You collected all the fruit", 27);
+  
+  vram_adr(NTADR_A(6,10));
+  vram_write("Press Start to Restart", 22);
+  ppu_on_all();
+
+ 
+  while(youWin) 
+  { 
+    pad = pad_trigger(0);
+    if (pad & PAD_START) 
+    {
+      ppu_off();
+      //vram_adr(NAMETABLE_A);
+      //vram_fill(0,1024);
+      
+      youWin = false; 
+      ppu_on_all();
+      
+    }
+  }
+  // reset lives and score
+  main();
+  
 }
