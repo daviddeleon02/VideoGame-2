@@ -1,3 +1,4 @@
+
 .export _fruit_background_pal
 .export _fruit_background_rle
 

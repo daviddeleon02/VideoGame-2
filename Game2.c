@@ -16,8 +16,14 @@ extern char danger_streets_music_data[];
 void __fastcall__ famitone_update(void);
 //#link "effects.s"
 extern char effects[];
+
 extern const byte fruit_background_pal[16];
 extern const byte fruit_background_rle[];
+
+//#link "bg_pal.s"					/
+extern const byte bg_pal[16];
+extern const byte bg_rle[];
+
 
 char a[1], b[2];
 char i;
@@ -256,9 +262,6 @@ void main() {
   
   
   title();
-  
-  
-  
   
   // Initialize actor fruits
   for(i=0;i<4;i++){		
@@ -532,7 +535,8 @@ void fruit_collision(int f){
 /*Title*/
 void title(){ 
   
-   show_title_screen(fruit_background_pal,fruit_background_rle);
+   //show_title_screen(fruit_background_pal,fruit_background_rle);
+   show_title_screen(bg_pal,bg_rle);
    while(1){
    pad = pad_trigger(i);
    if(pad & PAD_START)
