@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "neslib.h"
 #include <nes.h>
+
 //#link "chr_generic.s"
 //#link "fruit_background.s"
 
@@ -53,6 +54,23 @@ const unsigned char name[]={\
         128};
 
 
+
+
+/*Metasprite for bird enemy***************************COPY HERE (A) ************************/
+
+#define DEF_METASPRITE_C_2x2(name,code,pal)\
+const unsigned char name[]={\
+        0,      0,      (code)+0,   pal, \
+        0,      8,      (code)+1,   pal, \
+        8,      0,      (code)+2,   pal, \
+        8,      8,      (code)+3,   pal, \
+        128};
+
+/******************************************************COPY HERE (A) ***********************/
+
+
+
+
 //Metasprite for bear
 DEF_METASPRITE_B_2x2(bearRStand, 0xc4, 0);
 DEF_METASPRITE_B_2x2(bearRRun1, 0xc4, 0);
@@ -64,6 +82,20 @@ DEF_METASPRITE_B_2x2_FLIP(bearLStand, 0xd8, 0);
 DEF_METASPRITE_B_2x2_FLIP(bearLRun1, 0xdc, 0);
 DEF_METASPRITE_B_2x2_FLIP(bearLRun2, 0xe0, 0);
 DEF_METASPRITE_B_2x2_FLIP(bearLRun3, 0xe4, 0);
+
+
+
+/****Metasprite for bird******************************COPY HERE (B) ************/
+
+DEF_METASPRITE_C_2x2(birdStand, 0xf0, 0);
+DEF_METASPRITE_C_2x2(birdFly1, 0xf0, 0);
+DEF_METASPRITE_C_2x2(birdFly2, 0xf4, 0);
+DEF_METASPRITE_C_2x2(birdFly3, 0xf8, 0);
+
+/*****************************************************COPY HERE (B) ************/
+
+
+
 
 //Meta sprite for player 
 DEF_METASPRITE_2x2(playerRStand, 0xd8, 0);
@@ -93,6 +125,22 @@ const unsigned char* const bearRunSeq[16] = {
   bearRRun1, bearRRun2, bearRRun3, 
   bearRRun1, bearRRun2,
 };
+
+
+
+
+/*****Bird movement sequence********************************* COPY HERE (C) **********/
+const unsigned char* const birdFlySeq[16] = {
+  birdFly1, birdFly1, birdFly1, 
+  birdFly1, birdFly1, birdFly2, 
+  birdFly2, birdFly2,
+  birdFly2, birdFly3, birdFly3, 
+  birdFly3, birdFly3, birdFly2, 
+  birdFly2, birdFly2,
+};
+/**************************************************************COPY HERE (C) ***********/
+
+
 
 //Player movement sequence
 const unsigned char* const playerRunSeq[16] = {
@@ -134,12 +182,25 @@ sbyte actor_dx[NUM_ACTORS];
 sbyte actor_dy[NUM_ACTORS];
 
 
-// enemy actor
+// enemy BEAR actor
 byte enemy_x;
 byte enemy_y;
 // actor x/y deltas per frame (signed)
 sbyte enemy_dx;
 sbyte enemy_dy;
+
+
+
+/**** enemy BIRD actor****************************** COPY HERE (D) ************************/
+
+byte enemyBird_x;
+byte enemyBird_y;
+sbyte enemyBird_dx;
+sbyte enemyBird_dy;
+
+/********************r****************************** COPY HERE (D) ************************/
+
+
 
 typedef struct Fruit{
   bool falling;
@@ -221,6 +282,15 @@ void main() {
     enemy_dx = 2;
     enemy_dy = 0;
 
+/***************************************************** COPY HERE (E) *****************/
+  //Bird enemy on Right corner of the screen 
+    enemyBird_x = 250;
+    enemyBird_y = 161;
+    enemyBird_dx = -3;	//Delta values are placeholder, they need Sin(x) movement
+    enemyBird_dy = 1;
+  
+/***************************************************** COPY HERE (E) *****************/
+
   
   // Initiate Game loop
   while (1) {
@@ -265,7 +335,7 @@ void main() {
     }
     
     //Drawing BEAR enemy
-    if(score > 10){
+    if(score > 10){					
       enemy_y=191;
     for (i=0; i<1; i++) {
       byte runseq = enemy_x & 7;
@@ -275,6 +345,33 @@ void main() {
       enemy_x += enemy_dx;
     }
     }
+    
+    
+/***************************************************** COPY HERE (F) *****************/
+    //Drawing BIRD enemy, after score is past 20pts
+    
+    if(score >= 20){
+      
+    for (i=0; i<1; i++) {
+     
+      
+      byte runseq = enemyBird_x & 7; 
+      if(enemyBird_y == 200)
+        enemyBird_dy = -1;
+      if(enemyBird_y == 150)
+        enemyBird_dy = 1;
+      if (enemyBird_dx >= 0)
+        runseq += 8;
+      oam_id = oam_meta_spr(enemyBird_x, enemyBird_y, oam_id, birdFlySeq[runseq]);
+      enemyBird_x += enemyBird_dx + 1;
+      enemyBird_y += enemyBird_dy;
+      
+      
+    }
+    }
+/***************************************************** COPY HERE (F) *****************/
+    
+    
     
     //Draws and updates hearts for lives
     for(i=0;i<lives;i++)
@@ -308,6 +405,17 @@ void main() {
        sfx_play(2,0);
        enemy_x = 0; 
       }
+    
+
+/***************************************************** COPY HERE (G) *****************/
+    //Enemy Bird collision
+      if(enemyBird_y >= 210 || ((enemyBird_x >= actor_x[0]-4 && enemyBird_x <= actor_x[0]+8)&& (enemyBird_y >= actor_y[0]-2 && enemyBird_y <= actor_y[0]+4))){
+       lives--;
+       sfx_play(2,0);
+       enemyBird_x = 250; 
+      }
+    
+/***************************************************** COPY HERE (G) *****************/    
     
     // hide rest of sprites
     // if we haven't wrapped oam_id around to 0
